@@ -39,10 +39,10 @@ void filterChars(char *str) {
 
 char* strint(const char* s) {
     // s must contain only base-64 characters!
-    char* sc = (char*)malloc(strlen(s));
+    char* sc = (char*)malloc(strlen(s)+1);
     strcpy(sc, s);
     filterChars(sc);
-    char* r = (char*)malloc(strlen(sc));
+    char* r = (char*)malloc(strlen(sc)+1);
     char* p = r;
     char n;
     while (*sc != '\0') {
@@ -71,7 +71,7 @@ char* intstr(const char* i) {
 }
 
 char* strreverse(char* s) {
-    char* r = (char*)malloc(strlen(s));
+    char* r = (char*)malloc(strlen(s)+1);
     memcpy(r, s, strlen(s));
     int len = strlen(s);
     for (int i = 0; i < len / 2; i++) {
@@ -199,7 +199,7 @@ char* getElement(char** list, int index) {
 void putCachedValueForRound(const char* key, const char* value[], int type, int round) {
     for (int i = 0; i < CACHE_SIZE; i++) {
         if (key_cache[i].key != NULL && strcmp(key_cache[i].key, key) != 0) continue;
-        key_cache[i].key = (char*) malloc(strlen(key));
+        key_cache[i].key = (char*) malloc(strlen(key)+1);
         key_cache[i].key = strcpy(key_cache[i].key, key);
 
         const unsigned char MAX_ROUNDS = 20;
@@ -213,7 +213,7 @@ void putCachedValueForRound(const char* key, const char* value[], int type, int 
             }
             key_cache[i].weak_value[round * 2] = (char*) malloc(64);
             memcpy(key_cache[i].weak_value[round * 2], value[0], 64);
-            key_cache[i].weak_value[round * 2 + 1] = (char*) malloc(strlen(value[1]));
+            key_cache[i].weak_value[round * 2 + 1] = (char*) malloc(strlen(value[1])+1);
             strcpy(key_cache[i].weak_value[round * 2 + 1], value[1]);
         } else {
             if (key_cache[i].strong_value == NULL) {
@@ -224,7 +224,7 @@ void putCachedValueForRound(const char* key, const char* value[], int type, int 
             }
             key_cache[i].strong_value[round * 2] = (char*) malloc(128);
             memcpy(key_cache[i].strong_value[round * 2], value[0], 128);
-            key_cache[i].strong_value[round * 2 + 1] = (char*) malloc(strlen(value[1]));
+            key_cache[i].strong_value[round * 2 + 1] = (char*) malloc(strlen(value[1])+1);
             strcpy(key_cache[i].strong_value[round * 2 + 1], value[1]);
         }
         cache_current_size++;
@@ -236,10 +236,10 @@ void putCachedValue(const char* key, const char* value[], int type) {
     putCachedValueForRound(key, value, type, cache_current_size);
 }
 
-void prepareKeys(char* keys[], char* src, hashfc func, int rounds, int strong, int lengths[], int lsize) {
-    char* ck_str = src;
+void prepareKeys(char* keys[], const char* src, hashfc func, int rounds, int strong, int lengths[], int lsize) {
+    char* ck_str = (char*) malloc(strlen(src)+1);
+    strcpy(ck_str, src);
     char* original_key = ck_str;
-    //char* cur_key = strint(ck_str);
     char* str;
     for (int i = 0; i < rounds; i++) {
         char* cached_key = getElement(getPair(getCachedValue(original_key, strong), i), 0);
@@ -247,13 +247,16 @@ void prepareKeys(char* keys[], char* src, hashfc func, int rounds, int strong, i
             keys[i] = cached_key;
             //cur_key = keys[i];
             //char* str = getElement(getPair(getCachedValue(original_key, strong), i), 1);
-            //ck_str = (char*) malloc(strlen(str));
+            //ck_str = (char*) malloc(strlen(str)+1);
             //strcpy(ck_str, str);
             continue;
         }
-        keys[i] = malloc(128);
-        str = func(ck_str);
+        keys[i] = (char*)malloc(128);
+
+        str = (char*)malloc(strong ? 129 : 65);
+        strcpy(str, func(ck_str));
         strcat(str, func(strreverse(ck_str)));
+
         if (strong) {
             long len = strlen(str), q = len / 4;
             char* s = (char*)malloc(len + 1);
@@ -284,9 +287,13 @@ void prepareKeys(char* keys[], char* src, hashfc func, int rounds, int strong, i
             }
             s[j] = '\0';
             strcat(str, func(s));
+
+            if (ck_str != original_key) free(ck_str);
             ck_str = hextob64(str, lengths[min(i, lsize-1)]);
+            str[lengths[min(i, lsize-1)]] = '\0';
         } else {
             int index = i == 0 ? 59 : 61;
+            if (ck_str != original_key) free(ck_str);
             ck_str = str;
             *(ck_str + index) = '\0';
         }
@@ -295,33 +302,29 @@ void prepareKeys(char* keys[], char* src, hashfc func, int rounds, int strong, i
         //printf("%s\n", ck_str);
         putCachedValueForRound(original_key, pair, strong, i);
     }
-    free(ck_str);
+    free(original_key);
 }
 
 
 char* acraw(char* s, const char* k, char* out, hashfc func, int strong, char seed, long from, long step, int binary) {
     char* keys[15];
     int rounds = strong ? default_rounds : 2;
-    
-    char* ck_str = (char*)malloc(strlen(k));
-    strcpy(ck_str, k);
-    char* original_key = ck_str;
          
     int lengths[] = {47, 53, 59, 61, 67, 71, 73, 79, 83};
 
-    prepareKeys(keys, ck_str, func, rounds, strong, lengths, sizeof(lengths) / sizeof(lengths[0])); 
+    prepareKeys(keys, k, func, rounds, strong, lengths, sizeof(lengths) / sizeof(lengths[0]));
 
     // isn't it thrilling?
     int len = strlen(s);
     int keylength;
 
-    char* s0 = (char*)malloc(len);
+    char* s0 = (char*)malloc(len+1);
     strcpy(s0, s);
     
     char* s1 = out;
     
     if (s1 == NULL) {
-        s1 = (char*)malloc(len);
+        s1 = (char*)malloc(len+1);
         strcpy(s1, s);
     }
          
@@ -347,7 +350,7 @@ char* acraw(char* s, const char* k, char* out, hashfc func, int strong, char see
         }
     }
 
-    free(s0);
+    //free(s0);
 
     return s1;
 }
@@ -397,7 +400,7 @@ char* acraws_basic(char* s, const char* k, char* out, hashfc func, int strong, c
 char* crypt(char* s, const char* k, char* out, hashfc func, int on, int weak, int noseed) {
     // get read, get set
     srand(time(0));
-    char* key = (char*)malloc(strlen(k));
+    char* key = (char*)malloc(strlen(k)+1);
     strcpy(key, k);
     key = toBase64s((char*)key);
     int pos = strlen(key);
@@ -424,7 +427,13 @@ char* crypt(char* s, const char* k, char* out, hashfc func, int on, int weak, in
             step = 1;
         }
         char d = (!noseed) ? c64[rand() % 64] : s[strlen(s)-1];
-        out = acraws(s, key, out, func, !weak, l64[d], from, step);
+        if (out == NULL) {
+            out = (char*) malloc(strlen(s) + 20);
+        }
+        acraws(s, key, out, func, !weak, l64[d], from, step);
+        for (int i = 0; i < strlen(out)-strlen(s); i++) {
+            *(out + strlen(s) + i) = '\0';
+        }
         strcat(out, " ");
         *(out+strlen(out)-1) = d;
         if (!noseed && !weak) {
@@ -442,9 +451,9 @@ char* crypt(char* s, const char* k, char* out, hashfc func, int on, int weak, in
             long from = 0;
             long step = 1;
             if (d != NULL) {
-                char* from_str = (char*)malloc(e-d);
+                char* from_str = (char*)malloc(e-d+1);
                 strcpy(from_str, d);
-                char* step_str = (char*)malloc(s + strlen(s) - e);
+                char* step_str = (char*)malloc(s + strlen(s) - e + 1);
                 strcpy(step_str, e);
                 from = atoi(from_str);
                 step = atoi(step_str);
@@ -460,7 +469,7 @@ char* crypt(char* s, const char* k, char* out, hashfc func, int on, int weak, in
 char* bcrypt(char* s, long size, const char* k, char* out, hashfc func, int on, int weak, int noseed) {
     // get read, get set
     srand(time(0));
-    char* key = (char*)malloc(strlen(k));
+    char* key = (char*)malloc(strlen(k)+1);
     strcpy(key, k);
     key = toBase64s((char*)key);
     int pos = strlen(key);
@@ -524,7 +533,7 @@ void bcrypt_file(char* inputfile, char* outputfile, const char* k, hashfc func, 
 
     // get read, get set
     srand(time(0));
-    char* key = (char*)malloc(strlen(k));
+    char* key = (char*)malloc(strlen(k)+1);
     strcpy(key, k);
     key = toBase64s((char*)key);
     int pos = strlen(key);
@@ -579,4 +588,22 @@ void bcrypt_file(char* inputfile, char* outputfile, const char* k, hashfc func, 
     }
     fclose(in);
     fclose(out);
+}
+
+char* itoa(int num, char *str, int base) {       
+    sprintf(str, "%u", num);
+    return str;
+}
+
+int atoi(const char* str) {     
+    int result = 0;   
+    char* p = str;
+    char ch = *(p);
+    while (ch != '\0' && isdigit(ch)) {
+        result *= 10;
+        result += ch - '0';
+        p++;
+        ch = *(p);
+    } 
+    return result;
 }
