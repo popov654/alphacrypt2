@@ -197,12 +197,17 @@ char* getElement(char** list, int index) {
 }
 
 void putCachedValueForRound(const char* key, const char* value[], int type, int round) {
+    const unsigned char MAX_ROUNDS = 20;
     for (int i = 0; i < CACHE_SIZE; i++) {
         if (key_cache[i].key != NULL && strcmp(key_cache[i].key, key) != 0) continue;
-        key_cache[i].key = (char*) malloc(strlen(key)+1);
-        key_cache[i].key = strcpy(key_cache[i].key, key);
-
-        const unsigned char MAX_ROUNDS = 20;
+        if (key_cache[i].key == NULL) {
+            for (int j = cache_current_size-1; j >= 0; j--) {
+                if (j+1 < CACHE_SIZE) key_cache[j+1] = key_cache[j];
+            }
+            i = 0;
+            key_cache[i].key = (char*) malloc(strlen(key)+1);
+            key_cache[i].key = strcpy(key_cache[i].key, key);
+        }
         
         if (type == 0) {
             if (key_cache[i].weak_value == NULL) {
