@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    printf("Usage: acp.exe -i [input|input_file] -k [key|keyfile] -o [output|output_file]");
+    printf("Usage: acp.exe -i [input | inputfile] -k [key | keyfile] -o [output | outputfile]");
 
     return 0;
 }
