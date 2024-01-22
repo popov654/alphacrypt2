@@ -198,43 +198,48 @@ char* getElement(char** list, int index) {
 
 void putCachedValueForRound(const char* key, const char* value[], int type, int round) {
     const unsigned char MAX_ROUNDS = 20;
-    for (int i = 0; i < CACHE_SIZE; i++) {
-        if (key_cache[i].key != NULL && strcmp(key_cache[i].key, key) != 0) continue;
-        if (key_cache[i].key == NULL) {
-            for (int j = cache_current_size-1; j >= 0; j--) {
-                if (j+1 < CACHE_SIZE) key_cache[j+1] = key_cache[j];
-            }
-            i = 0;
-            key_cache[i].key = (char*) malloc(strlen(key)+1);
-            key_cache[i].key = strcpy(key_cache[i].key, key);
+    int pos = cache_current_size;
+    for (int i = pos-1; i >= 0; i--) {
+        if (key_cache[i].key != NULL && strcmp(key_cache[i].key, key) == 0) {
+            pos = i;
+            break;
         }
-        
-        if (type == 0) {
-            if (key_cache[i].weak_value == NULL) {
-                key_cache[i].weak_value = (char**) malloc(MAX_ROUNDS * 2 * sizeof(size_t));
-                for (int j = 0; j < MAX_ROUNDS * 2; j++) {
-                    key_cache[i].weak_value[j] = NULL;
-                }
-            }
-            key_cache[i].weak_value[round * 2] = (char*) malloc(64);
-            memcpy(key_cache[i].weak_value[round * 2], value[0], 64);
-            key_cache[i].weak_value[round * 2 + 1] = (char*) malloc(strlen(value[1])+1);
-            strcpy(key_cache[i].weak_value[round * 2 + 1], value[1]);
-        } else {
-            if (key_cache[i].strong_value == NULL) {
-                key_cache[i].strong_value = (char**) malloc(MAX_ROUNDS * 2 * sizeof(size_t));
-                for (int j = 0; j < MAX_ROUNDS * 2; j++) {
-                    key_cache[i].strong_value[j] = NULL;
-                }
-            }
-            key_cache[i].strong_value[round * 2] = (char*) malloc(128);
-            memcpy(key_cache[i].strong_value[round * 2], value[0], 128);
-            key_cache[i].strong_value[round * 2 + 1] = (char*) malloc(strlen(value[1])+1);
-            strcpy(key_cache[i].strong_value[round * 2 + 1], value[1]);
-        }
-        cache_current_size++;
-        break;
     }
+    int i = pos;
+
+    if (key_cache[i].key == NULL) {
+        for (int j = cache_current_size-1; j >= 0; j--) {
+            if (j+1 < CACHE_SIZE) key_cache[j+1] = key_cache[j];
+        }
+        i = 0;
+        key_cache[i].key = (char*) malloc(strlen(key)+1);
+        key_cache[i].key = strcpy(key_cache[i].key, key);
+    }
+    
+    if (type == 0) {
+        if (key_cache[i].weak_value == NULL) {
+            key_cache[i].weak_value = (char**) malloc(MAX_ROUNDS * 2 * sizeof(size_t));
+            for (int j = 0; j < MAX_ROUNDS * 2; j++) {
+                key_cache[i].weak_value[j] = NULL;
+            }
+        }
+        key_cache[i].weak_value[round * 2] = (char*) malloc(64);
+        memcpy(key_cache[i].weak_value[round * 2], value[0], 64);
+        key_cache[i].weak_value[round * 2 + 1] = (char*) malloc(strlen(value[1])+1);
+        strcpy(key_cache[i].weak_value[round * 2 + 1], value[1]);
+    } else {
+        if (key_cache[i].strong_value == NULL) {
+            key_cache[i].strong_value = (char**) malloc(MAX_ROUNDS * 2 * sizeof(size_t));
+            for (int j = 0; j < MAX_ROUNDS * 2; j++) {
+                key_cache[i].strong_value[j] = NULL;
+            }
+        }
+        key_cache[i].strong_value[round * 2] = (char*) malloc(128);
+        memcpy(key_cache[i].strong_value[round * 2], value[0], 128);
+        key_cache[i].strong_value[round * 2 + 1] = (char*) malloc(strlen(value[1])+1);
+        strcpy(key_cache[i].strong_value[round * 2 + 1], value[1]);
+    }
+    cache_current_size++;
 }
 
 void putCachedValue(const char* key, const char* value[], int type) {
