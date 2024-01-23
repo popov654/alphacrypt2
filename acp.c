@@ -327,9 +327,6 @@ char* acraw(char* s, const char* k, char* out, hashfc func, int strong, char see
     // isn't it thrilling?
     int len = strlen(s);
     int keylength;
-
-    char* s0 = (char*)malloc(len+1);
-    strcpy(s0, s);
     
     char* s1 = out;
     
@@ -337,30 +334,38 @@ char* acraw(char* s, const char* k, char* out, hashfc func, int strong, char see
         s1 = (char*)malloc(len+1);
         strcpy(s1, s);
     }
+
+    char ch, ch1, last_p, last_c;
          
     for (int i = 0; i < len; i++) {
         if (!binary) {
-            char n = l64[s[i]];
+            ch = ch1 = l64[s[i]];
             for (int j = 0; j < rounds; j++) {
                 keylength = strong ? lengths[j] : (j == 0 ? 59 : 61);
-                n ^= keys[j][(from+i*step) % keylength];
+                ch ^= keys[j][(from+i*step) % keylength];
             }
-            n ^= seed;
-            s1[i] = c64[n];
-            if (mode == 1 && i > 0) s1[i] = c64[l64[s1[i]] ^ l64[s1[i-1]]];
-            if (mode == 2 && i > 0) s1[i] = c64[l64[s1[i]] ^ l64[s0[i-1]]];
-        } else {
-            for (int j = 0; j < rounds; j++) {
-                keylength = strong ? lengths[j] : (j == 0 ? 59 : 61);
-                s1[i] = ((unsigned char) s[i]) ^ keys[j][(from+i*step) % keylength];
-            }
-            s1[i] ^= seed;
-            if (mode == 1 && i > 0) s1[i] = ((unsigned char) s1[i]) ^ ((unsigned char) s1[i-1]);
-            if (mode == 2 && i > 0) s1[i] = ((unsigned char) s1[i]) ^ ((unsigned char) s0[i-1]);
-        }
-    }
+            ch ^= seed;
+            
+            if (mode == 1 && i > 0) ch = ch ^ last_c;
+            if (mode == 2 && i > 0) ch = ch ^ last_p;
 
-    //free(s0);
+            s1[i] = c64[ch];
+        } else {
+            ch = ch1 = s[i];
+            for (int j = 0; j < rounds; j++) {
+                keylength = strong ? lengths[j] : (j == 0 ? 59 : 61);
+                ch = ((unsigned char) ch) ^ keys[j][(from+i*step) % keylength];
+            }
+            ch ^= seed;
+
+            if (mode == 1 && i > 0) ch = ((unsigned char) ch) ^ ((unsigned char) last_c);
+            if (mode == 2 && i > 0) ch = ((unsigned char) ch) ^ ((unsigned char) last_p);
+
+            s1[i] = ch;
+        }
+        last_p = ch1;
+        last_c = s1[i];
+    }
 
     return s1;
 }
