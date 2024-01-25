@@ -56,6 +56,10 @@ int main(int argc, char* argv[])
         }
     }
 
+    if (!input && argc > 1 && argv[1][0] != '-') {
+        input = argv[1];
+    }
+
     if (!key && keyfilename) {
         key = readFileContent(keyfilename);
     }
