@@ -4,8 +4,9 @@
 char* readFileContent(char* filename) {
     FILE *in = fopen(filename, "rb");
     if (!in) {
-        printf("Input file \"%s\" not found.\n", filename);
-        exit(1);
+        //printf("Input file \"%s\" not found.\n", filename);
+        //exit(1);
+        return NULL;
     }
 
     long size, pos;
@@ -71,12 +72,16 @@ int main(int argc, char* argv[])
             src = input+1;
             *(src + strlen(input)-2) = '\0';
         } else {
-            //src = readFileContent(input);
-            output = (char*) malloc(strlen(input) + 5);
-            strcpy(output, input);
-            strcat(output, ".acp");
-            acp_bcrypt_file(input, output, key, md5StringHash, on, 0, 0);
-            return 0;
+            src = readFileContent(input);
+            if (src == NULL) {
+                src = input;
+            } else {
+                output = (char*) malloc(strlen(input) + 5);
+                strcpy(output, input);
+                strcat(output, ".acp");
+                acp_bcrypt_file(input, output, key, md5StringHash, on, 0, 0);
+                return 0;
+            }
         }
         char* encrypted = acp_crypt(src, key, NULL, md5StringHash, on, 0, 0);
         printf("%s", encrypted);
