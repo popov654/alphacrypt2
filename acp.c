@@ -119,6 +119,45 @@ char* toBase64(char* b, int binary) {
     return res;
 }
 
+char* fromBase64(char* s, int* size) {
+
+    char* res = (char*)malloc(strlen(s) / 4 * 3 + 3);
+    char* p = s;
+    char* r = res;
+
+    int padding;
+    int i = strlen(s) - 1;
+    while (s[i] == '=') {
+        s[i--] = 'A';
+        padding++;
+    }
+
+    unsigned char bytes[4];
+
+    int end = *p == '\0';
+
+    while (!end) {
+        for (int i = 0; i < 3; i++) bytes[i] = 0;
+        for (int i = 0; i < 4; i++) {
+            end = *p == '\0';
+            if (end) {
+                break;
+            }
+            bytes[i] = (unsigned char) l64[*(p++)];
+        }
+        unsigned int q = (bytes[0] << 18) | (bytes[1] << 12) | (bytes[2] << 6) | bytes[3];
+        for (int j = 0; j < 3; j++) {
+            *(r++) = (q >> (16 - 8 * j)) & 0xFF;
+        }
+        end = *p == '\0';
+    }
+    *r = '\0';
+
+    *size = r - res;
+
+    return res;
+}
+
 char* toBase64s(char* b) {
     char* res = toBase64(b, 0);
     return res;
@@ -255,10 +294,6 @@ void prepareKeys(char* keys[], const char* src, hashfc func, int rounds, int str
         char* cached_key = getElement(getPair(getCachedValue(original_key, strong), i), 0);
         if (cached_key != NULL) {
             keys[i] = cached_key;
-            //cur_key = keys[i];
-            //char* str = getElement(getPair(getCachedValue(original_key, strong), i), 1);
-            //ck_str = (char*) malloc(strlen(str)+1);
-            //strcpy(ck_str, str);
             continue;
         }
         keys[i] = (char*)malloc(128);
@@ -443,6 +478,7 @@ char* acp_crypt(char* s, const char* k, char* out, hashfc func, int on, int weak
             step = 1;
         }
         char d = (!noseed) ? c64[rand() % 64] : s[strlen(s)-1];
+        s = toBase64s(s);
         if (out == NULL) {
             out = (char*) malloc(strlen(s) + 20);
         }
@@ -474,9 +510,11 @@ char* acp_crypt(char* s, const char* k, char* out, hashfc func, int on, int weak
                 from = atoi(from_str);
                 step = atoi(step_str);
             }
-            *(d-1) = '\0';
-            out = acraws(s, key, out, func, !weak, l64[s[d-s-2]], from, step);
-            *(out+strlen(out)-1) = '\0';
+            char seed = s[d-s-2];
+            *(d-2) = '\0';
+            out = acraws(s, key, out, func, !weak, l64[seed], from, step);
+            int size;
+            out = fromBase64(out, &size);
         }
     }
     return out;
