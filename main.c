@@ -39,6 +39,18 @@ int file_exists(const char *filename)
     }
     return 0;
 }
+
+int ask_for_overwrite(const char* output) {
+    if (file_exists(output)) {
+        printf("The file with such name already exists. Do you want to overwrite it? (y/N) ");
+        char c;
+        scanf("%c", &c);
+        if (c != 'y' && c != 'Y') {
+            return 0;
+        }
+    }
+    return 1;
+}
  
 int main(int argc, char* argv[])
 {
@@ -103,7 +115,9 @@ int main(int argc, char* argv[])
                     strncpy(output, input, strlen(input) - 4);
                     output[strlen(input) - 4] = '\0';
                 }
-                acp_bcrypt_file(input, output, key, md5StringHash, on, 0, 0);
+                if (ask_for_overwrite(output)) {
+                    acp_bcrypt_file(input, output, key, md5StringHash, on, 0, 0);
+                }
                 return 0;
             }
         }
@@ -120,7 +134,9 @@ int main(int argc, char* argv[])
     }
 
     if (output && input) {
-        acp_bcrypt_file(input, output, key, md5StringHash, on, 0, 0);
+        if (ask_for_overwrite(output)) {
+            acp_bcrypt_file(input, output, key, md5StringHash, on, 0, 0);
+        }
         return 0;
     }
 
