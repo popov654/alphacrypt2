@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h>
 
 #ifndef min
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
@@ -43,8 +44,8 @@ char* acraws(char* s, const char* k, char* out, hashfc f, int strong, char seed,
 char* acrawb(char* s, const char* k, char* out, hashfc f, int strong, char seed, long from, long step);
 char* acraws_basic(char* s, const char* k, char* out, hashfc f, int strong, char seed);
 
-char* crypt(char* s, const char* k, char* out, hashfc func, int on, int weak, int noseed);
-char* bcrypt(char* s, long size, const char* k, char* out, hashfc func, int on, int weak, int noseed);
-void bcrypt_file(char* inputfile, char* outputfile, const char* k, hashfc func, int on, int weak, int noseed);
+char* acp_crypt(char* s, const char* k, char* out, hashfc func, int on, int weak, int noseed);
+char* acp_bcrypt(char* s, long size, const char* k, char* out, hashfc func, int on, int weak, int noseed);
+void acp_bcrypt_file(char* inputfile, char* outputfile, const char* k, hashfc func, int on, int weak, int noseed);
 
 #endif

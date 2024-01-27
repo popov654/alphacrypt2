@@ -4,12 +4,11 @@ LDFLAGS :=
 C_SOURCES :=$(wildcard *.c)
 C_EXECUTABLE :=$(C_SOURCES:main.c=)
 CFLAGS :=-std=c99
-EXECUTABLE :=main.exe
+EXECUTABLE :=acp.exe
  
-all:$(C_EXECUTABLE)
-
-$(C_EXECUTABLE):$(C_SOURCES)
-		$(CC) $(CFLAGS) $(C_SOURCES) -o $(EXECUTABLE)
+all:
+		$(CC) $(CFLAGS) md5.c acp.c main.c -o $(EXECUTABLE)
+		$(CC) $(CFLAGS) md5.c acp.c tests.c -o tests
 
 clean:
 		rm -rf $(EXECUTABLE)

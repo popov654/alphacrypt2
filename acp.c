@@ -397,9 +397,10 @@ char* acraws_basic(char* s, const char* k, char* out, hashfc func, int strong, c
     return acraws(s, k, out, func, strong, seed, 0L, 1L);
 }
 
-char* crypt(char* s, const char* k, char* out, hashfc func, int on, int weak, int noseed) {
+char* acp_crypt(char* s, const char* k, char* out, hashfc func, int on, int weak, int noseed) {
     // get read, get set
     srand(time(0));
+    if (l64['A'] == 0) acp_init();
     char* key = (char*)malloc(strlen(k)+1);
     strcpy(key, k);
     key = toBase64s((char*)key);
@@ -466,9 +467,10 @@ char* crypt(char* s, const char* k, char* out, hashfc func, int on, int weak, in
     return out;
 }
 
-char* bcrypt(char* s, long size, const char* k, char* out, hashfc func, int on, int weak, int noseed) {
+char* acp_bcrypt(char* s, long size, const char* k, char* out, hashfc func, int on, int weak, int noseed) {
     // get read, get set
     srand(time(0));
+    if (l64['A'] == 0) acp_init();
     char* key = (char*)malloc(strlen(k)+1);
     strcpy(key, k);
     key = toBase64s((char*)key);
@@ -517,7 +519,9 @@ char* bcrypt(char* s, long size, const char* k, char* out, hashfc func, int on, 
     return out;
 }
 
-void bcrypt_file(char* inputfile, char* outputfile, const char* k, hashfc func, int on, int weak, int noseed) {
+void acp_bcrypt_file(char* inputfile, char* outputfile, const char* k, hashfc func, int on, int weak, int noseed) {
+    if (l64['A'] == 0) acp_init();
+    
     FILE *in = fopen(inputfile, "rb");
 	if (!in) {
 		printf("Input file \"%s\" not found.\n", inputfile);
@@ -597,7 +601,7 @@ char* itoa(int num, char *str, int base) {
 
 int atoi(const char* str) {     
     int result = 0;   
-    char* p = str;
+    const char* p = str;
     char ch = *(p);
     while (ch != '\0' && isdigit(ch)) {
         result *= 10;
