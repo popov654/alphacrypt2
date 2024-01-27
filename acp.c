@@ -450,7 +450,7 @@ char* acraws_basic(char* s, const char* k, char* out, hashfc func, int strong, c
 char* acp_crypt(char* s, const char* k, char* out, hashfc func, int on, int weak, int noseed) {
     // get read, get set
     srand(time(0));
-    if (l64['A'] == 0) acp_init();
+    
     char* key = (char*)malloc(strlen(k)+1);
     strcpy(key, k);
     key = toBase64s((char*)key);
@@ -462,6 +462,8 @@ char* acp_crypt(char* s, const char* k, char* out, hashfc func, int on, int weak
     int len = (weak ? 3599 : 8965109) * strlen(k);
     // dump empty stuff
     if (strlen(k) == 0 || strlen(s) == 0 || func == NULL) return s;
+
+    if (l64['A'] == 0) acp_init();
 
     long from; int step;
 
@@ -523,7 +525,6 @@ char* acp_crypt(char* s, const char* k, char* out, hashfc func, int on, int weak
 char* acp_bcrypt(char* s, long size, const char* k, char* out, hashfc func, int on, int weak, int noseed) {
     // get read, get set
     srand(time(0));
-    if (l64['A'] == 0) acp_init();
     char* key = (char*)malloc(strlen(k)+1);
     strcpy(key, k);
     key = toBase64s((char*)key);
@@ -537,6 +538,8 @@ char* acp_bcrypt(char* s, long size, const char* k, char* out, hashfc func, int 
     if (strlen(k) == 0 || size == 0L || sizeof(s) / sizeof(s[0]) == 0 || func == NULL) return s;
 
     unsigned int from, step;
+
+    if (l64['A'] == 0) acp_init();
 
     if (on) {
         if (!noseed && !weak) {
@@ -573,7 +576,6 @@ char* acp_bcrypt(char* s, long size, const char* k, char* out, hashfc func, int 
 }
 
 void acp_bcrypt_file(char* inputfile, char* outputfile, const char* k, hashfc func, int on, int weak, int noseed) {
-    if (l64['A'] == 0) acp_init();
     
     FILE *in = fopen(inputfile, "rb");
 	if (!in) {
@@ -587,6 +589,8 @@ void acp_bcrypt_file(char* inputfile, char* outputfile, const char* k, hashfc fu
     fseek(in, 0, SEEK_END);
     size = ftell(in);
     fseek(in, 0, SEEK_SET);
+
+    if (l64['A'] == 0) acp_init();
 
     // get read, get set
     srand(time(0));
