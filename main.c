@@ -28,6 +28,17 @@ char* readFileContent(char* filename) {
 
     return content;
 }
+
+int file_exists(const char *filename)
+{
+    FILE *file;
+    file = fopen(filename, "r");
+    if (file) {
+        fclose(file);
+        return 1;
+    }
+    return 0;
+}
  
 int main(int argc, char* argv[])
 {
@@ -80,13 +91,18 @@ int main(int argc, char* argv[])
             src = input+1;
             *(src + strlen(input)-2) = '\0';
         } else {
-            src = readFileContent(input);
-            if (src == NULL) {
+            if (!file_exists(input)) {
                 src = input;
             } else {
-                output = (char*) malloc(strlen(input) + 5);
-                strcpy(output, input);
-                strcat(output, ".acp");
+                if (on) {
+                    output = (char*) malloc(strlen(input) + 5);
+                    strcpy(output, input);
+                    strcat(output, ".acp");
+                } else {
+                    output = (char*) malloc(strlen(input) - 3);
+                    strncpy(output, input, strlen(input) - 4);
+                    output[strlen(input) - 4] = '\0';
+                }
                 acp_bcrypt_file(input, output, key, md5StringHash, on, 0, 0);
                 return 0;
             }
