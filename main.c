@@ -1,5 +1,13 @@
 #include "md5.h"
 #include "acp.h"
+#include "wchar.h"
+#include "locale.h"
+
+#ifdef _WIN32
+#include "processenv.h"
+#include "windows.h"
+#include "shellapi.h"
+#endif
 
 char* readFileContent(char* filename) {
     FILE *in = fopen(filename, "rb");
@@ -27,37 +35,57 @@ char* readFileContent(char* filename) {
     return content;
 }
  
-int main(int argc, char* argv[])
+int main(int argc, wchar_t* argv[])
 {
-    char *src = NULL, *input = NULL,
-         *output = NULL, *key = NULL, *keyfilename = NULL;
+    char *src = NULL, *input = NULL, *key = NULL, *keyfilename = NULL, *output = NULL;
     int on = 1;
+
+    setlocale(LC_ALL, "en_US.utf8");
+    
+    #ifdef _WIN32
+    LPWSTR cl = GetCommandLineW();
+    int num_args;
+    argv = CommandLineToArgvW(cl, &argc);
+    #endif
+
     for (int i = 1; i < argc; i++) {
-        if (i < argc-1 && (strcmp("-i", argv[i]) == 0 ||
-                           strcmp("-in", argv[i]) == 0 ||
-                           strcmp("--input", argv[i]) == 0)) {
-            input = argv[++i];
+        if (i < argc-1 && (wcscmp(L"-i", argv[i]) == 0 ||
+                           wcscmp(L"-in", argv[i]) == 0 ||
+                           wcscmp(L"--input", argv[i]) == 0)) {
+            int strlen = wcstombs(input, argv[i+1], wcslen(argv[i+1]));
+            input = (char*) malloc(strlen + 1);
+            wcstombs(input, argv[++i], strlen);
+            input[strlen] = '\0';
         }
-        else if (i < argc-1 && (strcmp("-o", argv[i]) == 0 ||
-                           strcmp("-out", argv[i]) == 0 ||
-                           strcmp("--output", argv[i]) == 0)) {
-            output = argv[++i];
+        else if (i < argc-1 && (wcscmp(L"-o", argv[i]) == 0 ||
+                           wcscmp(L"-out", argv[i]) == 0 ||
+                           wcscmp(L"--output", argv[i]) == 0)) {
+            int strlen = wcstombs(output, argv[i+1], wcslen(argv[i+1]));
+            output = (char*) malloc(strlen + 1);
+            wcstombs(output, argv[++i], strlen);
         }
-        else if (i < argc-1 && (strcmp("-k", argv[i]) == 0 ||
-                           strcmp("--key", argv[i]) == 0)) {
-            key = argv[++i];
+        else if (i < argc-1 && (wcscmp(L"-k", argv[i]) == 0 ||
+                           wcscmp(L"--key", argv[i]) == 0)) {
+            int strlen = wcstombs(key, argv[i+1], wcslen(argv[i+1]));        
+            key = (char*) malloc(strlen + 1);
+            wcstombs(key, argv[++i], strlen);
+            key[strlen] = '\0';
         }
-        else if (i < argc-1 && (strcmp("-kf", argv[i]) == 0 ||
-                           strcmp("--keyfile", argv[i]) == 0)) {
-            keyfilename = argv[++i];
+        else if (i < argc-1 && (wcscmp(L"-kf", argv[i]) == 0 ||
+                           wcscmp(L"--keyfile", argv[i]) == 0)) {
+            int strlen = wcstombs(keyfilename, argv[i+1], wcslen(argv[i+1]));
+            keyfilename = (char*) malloc(strlen + 1);
+            wcstombs(keyfilename, argv[++i], strlen);
         }
-        else if (strcmp("-d", argv[i]) == 0 || strcmp("--decode", argv[i]) == 0) {
+        else if (wcscmp(L"-d", argv[i]) == 0 || wcscmp(L"--decode", argv[i]) == 0) {
             on = 0;
         }
     }
 
-    if (!input && argc > 1 && argv[1][0] != '-') {
-        input = argv[1];
+    if (!input && argc > 1 && argv[1][0] != L'-') {
+        int strlen = wcstombs(input, argv[1], wcslen(argv[1]));
+        input = (char*) malloc(strlen + 1);
+        wcstombs(input, argv[1], strlen);
     }
 
     if (!key && keyfilename) {
@@ -88,7 +116,14 @@ int main(int argc, char* argv[])
             }
         }
         char* encrypted = acp_crypt(src, key, NULL, md5StringHash, on, 0, 0);
-        printf("%s", encrypted);
+        
+        wchar_t* output_string;
+        int len = mbstowcs(NULL, encrypted, 0);
+        output_string = (wchar_t*) malloc(len * 4);
+        mbstowcs(output_string, encrypted, len);
+        output_string[len] = L'\0';
+        printf_s("%ls", output_string);
+
         return 0;
     }
 
